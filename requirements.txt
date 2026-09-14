@@ -1,0 +1,6 @@
+numpy>=2,<3
+matplotlib>=3.9,<4
+astropy>=7,<9
+jplephem>=2.22,<3
+pytest>=8,<10
+scipy>=1.15,<2

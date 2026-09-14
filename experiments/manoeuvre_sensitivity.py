@@ -31,8 +31,10 @@ def run_sensitivity_sweep(burns_m_s):
                 )
             ]
 
-        times_s, states = propagate_jupiter_flyby(manoeuvres)
-        metrics = calculate_flyby_comparison_metrics(times_s, states)
+        result = propagate_jupiter_flyby(manoeuvres)
+        metrics = calculate_flyby_comparison_metrics(
+            result.times_s, result.states
+        )
 
         closest_approach_altitudes_km.append(
             metrics["closest_approach_altitude_km"]
