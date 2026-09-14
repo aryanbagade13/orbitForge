@@ -3,7 +3,9 @@
 > **Status: Work in progress.** A nominal deterministic Jupiter flyby can now
 > be propagated, measured, and visualised. The engine also supports physical
 > collision checks and optimiser-ready impulsive manoeuvres scheduled at
-> arbitrary times. Nine automated tests currently protect the foundation.
+> arbitrary times. Ephemeris-driven interplanetary propagation and encounter
+> evaluation are now available; the interplanetary optimiser is not implemented.
+> Seventy-three automated tests currently protect the foundation.
 
 ## Project goal
 
@@ -114,6 +116,73 @@ solely to make the model stochastic.
 
 ## Current implementation
 
+See [the interplanetary model guide](docs/interplanetary_model.md) for the
+departure builder, explicit flyby requirements, adaptive propagator, evaluator,
+and a reproducible eight-year Earth-departure experiment with results.
+Run `experiments/interplanetary_baseline.py` in PyCharm to generate its plots.
+The two trial candidates are explicitly infeasible; no optimised route is claimed.
+
+### Ephemeris-driven mission propagation
+
+`gravity_assist.interplanetary.simulate_mission` now accepts a
+`MissionDefinition`, `MissionCandidate`, an `EphemerisProvider`, a sequence of
+`CelestialBody` objects, and `dt_s`. The caller supplies masses and radii for
+the bodies included in the force model. Those bodies must include the Sun,
+destination, required flyby bodies, and bodies with specified clearance limits.
+
+```python
+from gravity_assist.interplanetary import simulate_mission
+
+result = simulate_mission(
+    definition=definition,
+    candidate=candidate,
+    ephemerides=ephemerides,
+    bodies=bodies,
+    dt_s=dt_s,
+)
+spacecraft_positions_km = result.spacecraft_states[:, :3]
+spacecraft_velocities_km_s = result.spacecraft_states[:, 3:]
+```
+
+This example assumes the input objects have already been constructed.
+The spacecraft state and burn vectors must use the provider's coordinate axes.
+The default mission frame matches `JplEphemerisProvider`: ICRS axes with a
+Solar System barycentric origin. Departure epochs and declared frames are
+checked for agreement; these checks do not transform incorrectly supplied
+coordinates. Do not reuse the old heliocentric initial state directly.
+
+The new derivative queries planetary positions at each RK4 stage and sums
+their Newtonian gravitational accelerations. Planetary trajectories are
+prescribed by the ephemeris; only the spacecraft is integrated.
+Scheduled burns work at arbitrary times, including departure and arrival.
+A sample at a burn time contains the post-burn velocity.
+
+`MissionResult.state_layout` explicitly distinguishes `spacecraft` (six
+columns) from `planet_spacecraft` (the existing twelve-column default).
+`spacecraft_states` provides the six spacecraft columns for either layout.
+Existing Jupiter experiments retain their original layout and dynamics.
+
+Clearance checks raise `UnsafeTrajectoryError` at evaluated RK4 stages and
+stored samples. They are not continuous collision detection: sufficiently
+coarse steps can skip an encounter. Fixed-step convergence must be established
+for each mission, especially near flybys. DE432s Jupiter/Saturn positions are
+planetary-system barycentres; their surface clearances are approximate.
+
+This entry point **propagates a proposal**. For refined encounter evaluation,
+use `simulate_adaptive_mission` followed by `evaluate_mission`, or the combined
+`assess_candidate` entry point. Interplanetary optimisation remains to be implemented.
+Supplying a required flyby name includes that body in the model; it does not
+automatically steer the spacecraft toward it. Earth departure and launch costs
+remain outside the initial post-departure model.
+
+Verification includes synthetic moving-body gravity, circular-orbit timestep
+convergence, scheduled burns and frame/epoch compatibility. A one-day JPL
+smoke test with Sun/Earth/Jupiter/Saturn gravity and an off-grid burn completed
+at 3600 s and 1800 s steps, with an approximately 1.6e-6 km difference in final
+position. This short test is not validation of a multiyear transfer.
+
+### Existing Jupiter demonstration
+
 The repository currently provides a working deterministic flyby model:
 
 - `CelestialBody` and `OrbitalState` data models;
@@ -135,8 +204,8 @@ The repository currently provides a working deterministic flyby model:
   10 m/s correction manoeuvre on mission day 5;
 - a three-dimensional close-up containing a correctly scaled Jupiter and the
   nearby spacecraft trajectory;
-- nine automated tests covering gravity, collisions, manoeuvres, and scheduled
-  mission propagation.
+- automated tests covering gravity, collisions, manoeuvres, mission propagation,
+  ephemerides, encounter measurements and feasibility checks.
 
 Deterministic trajectory optimisation, refined asymptotic-state estimation,
 Monte Carlo experiments, and SDE integration have not yet been implemented.

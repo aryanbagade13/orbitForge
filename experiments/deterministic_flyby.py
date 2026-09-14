@@ -165,7 +165,7 @@ start_time_s = 0.0
 end_time_s = 50 * SECONDS_PER_DAY
 dt_s = 60.0
 
-times, states = propagate_with_manoeuvres(
+result = propagate_with_manoeuvres(
     initial_state=system_state,
     start_time_s=start_time_s,
     end_time_s=end_time_s,
@@ -174,13 +174,15 @@ times, states = propagate_with_manoeuvres(
     manoeuvres=[],
 )
 
+times = result.times_s
+states = result.states
 baseline_metrics = calculate_flyby_comparison_metrics(times, states)
 
 trial_manoeuvre = ImpulsiveManoeuvre(
     time_s=5 * SECONDS_PER_DAY,
     delta_velocity_km_s=np.array([0.0, 0.01, 0.0]),
 )
-manoeuvred_times, manoeuvred_states = propagate_with_manoeuvres(
+manoeuvred_result = propagate_with_manoeuvres(
     initial_state=system_state,
     start_time_s=start_time_s,
     end_time_s=end_time_s,
@@ -188,6 +190,8 @@ manoeuvred_times, manoeuvred_states = propagate_with_manoeuvres(
     derivative_function=derivative_for_this_flyby,
     manoeuvres=[trial_manoeuvre],
 )
+manoeuvred_times = manoeuvred_result.times_s
+manoeuvred_states = manoeuvred_result.states
 manoeuvred_metrics = calculate_flyby_comparison_metrics(
     manoeuvred_times,
     manoeuvred_states,

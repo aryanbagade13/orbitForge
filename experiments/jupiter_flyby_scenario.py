@@ -1,6 +1,7 @@
 import numpy as np
 
 from gravity_assist.mission import propagate_with_manoeuvres
+from gravity_assist.results import MissionResult
 from gravity_assist.models import CelestialBody, OrbitalState
 from gravity_assist.simulation import (
     pack_system_state,
@@ -87,7 +88,7 @@ def derivative_for_this_flyby(time_s, state):
     )
 
 
-def propagate_jupiter_flyby(manoeuvres=()):
+def propagate_jupiter_flyby(manoeuvres=()) -> MissionResult:
     return propagate_with_manoeuvres(
         initial_state=system_state,
         start_time_s=start_time_s,

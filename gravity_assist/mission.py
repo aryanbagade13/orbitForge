@@ -2,6 +2,8 @@
 
 from collections.abc import Sequence
 
+from .results import MissionResult
+
 import numpy as np
 
 from .integrators import DerivativeFunction, StateVector, propagate_fixed_step
@@ -16,12 +18,18 @@ def propagate_with_manoeuvres(
     dt_s: float,
     derivative_function: DerivativeFunction,
     manoeuvres: Sequence[ImpulsiveManoeuvre],
-) -> tuple[np.ndarray, np.ndarray]:
-    """Propagate a 12-component system state through scheduled burns."""
+    *,
+    state_layout: str = "planet_spacecraft",
+    reference_frame: str | None = None,
+) -> MissionResult:
+    """Propagate a declared state layout; burn-time samples are post-burn."""
     current_state = np.asarray(initial_state, dtype=float).copy()
 
-    if current_state.shape != (12,):
-        raise ValueError("initial_state must have shape (12,)")
+    widths = {"planet_spacecraft": 12, "spacecraft": 6}
+    if state_layout not in widths:
+        raise ValueError("unknown state_layout")
+    if current_state.shape != (widths[state_layout],):
+        raise ValueError(f"initial_state must have shape ({widths[state_layout]},)")
     if not np.isfinite(current_state).all():
         raise ValueError("initial_state must contain only finite values")
     if not np.isfinite(start_time_s) or not np.isfinite(end_time_s):
@@ -55,10 +63,13 @@ def propagate_with_manoeuvres(
         all_times_s.extend(segment_times_s[1:])
         all_states.extend(segment_states[1:])
 
-        current_state = apply_spacecraft_manoeuvre_to_system_state(
-            segment_states[-1],
-            manoeuvre,
-        )
+        if state_layout == "planet_spacecraft":
+            current_state = apply_spacecraft_manoeuvre_to_system_state(
+                segment_states[-1], manoeuvre
+            )
+        else:
+            current_state = segment_states[-1].copy()
+            current_state[3:6] += manoeuvre.delta_velocity_km_s
         current_time_s = manoeuvre.time_s
 
         # Store the post-burn state at the manoeuvre time.
@@ -74,4 +85,10 @@ def propagate_with_manoeuvres(
     all_times_s.extend(final_times_s[1:])
     all_states.extend(final_states[1:])
 
-    return np.asarray(all_times_s), np.asarray(all_states)
+    return MissionResult(
+        times_s=all_times_s,
+        states=all_states,
+        manoeuvres=ordered_manoeuvres,
+        state_layout=state_layout,
+        reference_frame=reference_frame,
+    )

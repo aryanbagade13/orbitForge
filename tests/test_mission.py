@@ -3,6 +3,7 @@ import pytest
 
 from gravity_assist.manoeuvres import ImpulsiveManoeuvre
 from gravity_assist.mission import propagate_with_manoeuvres
+from gravity_assist.results import MissionResult
 
 
 def constant_velocity_derivative(time_s, state):
@@ -20,7 +21,7 @@ def test_manoeuvre_changes_motion_at_scheduled_time():
         delta_velocity_km_s=np.array([1.0, 0.0, 0.0]),
     )
 
-    times_s, states = propagate_with_manoeuvres(
+    result = propagate_with_manoeuvres(
         initial_state=initial_state,
         start_time_s=0.0,
         end_time_s=4.0,
@@ -28,6 +29,12 @@ def test_manoeuvre_changes_motion_at_scheduled_time():
         derivative_function=constant_velocity_derivative,
         manoeuvres=[manoeuvre],
     )
+
+    assert isinstance(result, MissionResult)
+    assert len(result.manoeuvres) == 1
+    assert result.manoeuvres[0] is manoeuvre
+    times_s = result.times_s
+    states = result.states
 
     np.testing.assert_allclose(
         times_s,
