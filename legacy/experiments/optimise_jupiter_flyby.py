@@ -2,14 +2,14 @@ from gravity_assist.manoeuvres import ImpulsiveManoeuvre
 
 import numpy as np
 
-from experiments.jupiter_flyby_scenario import SECONDS_PER_DAY
+from legacy.experiments.jupiter_flyby_scenario import SECONDS_PER_DAY
 
 burn_times_days = [3.0, 5.0, 7.0]
 y_burns_m_s = [-20.0, 0.0, 20.0]
 
 candidate_results = []
 
-from experiments.jupiter_flyby_scenario import (
+from legacy.experiments.jupiter_flyby_scenario import (
     propagate_jupiter_flyby,
     calculate_flyby_comparison_metrics,
 )

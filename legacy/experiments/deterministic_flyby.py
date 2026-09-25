@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gravity_assist.manoeuvres import ImpulsiveManoeuvre
-from gravity_assist.mission import propagate_with_manoeuvres
+from legacy.engine.mission import propagate_with_manoeuvres
 from gravity_assist.models import CelestialBody, OrbitalState
-from gravity_assist.simulation import (
+from legacy.engine.simulation import (
     pack_system_state,
     restricted_three_body_derivative,
 )

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from gravity_assist.manoeuvres import ImpulsiveManoeuvre
-from gravity_assist.mission import propagate_with_manoeuvres
+from legacy.engine.mission import propagate_with_manoeuvres
 from gravity_assist.results import MissionResult
 
 

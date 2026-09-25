@@ -1,4 +1,4 @@
-"""General-purpose numerical integration methods."""
+"""Archived fixed-step RK4 implementation, retained for learning and checks."""
 
 from collections.abc import Callable
 
