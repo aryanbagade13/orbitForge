@@ -13,7 +13,7 @@ def test_mission_result_converts_inputs_to_expected_types():
 
     result = MissionResult(
         times_s=[0.0, 1.0],
-        states=[[0.0] * 12, [1.0] * 12],
+        states=[[0.0] * 6, [1.0] * 6],
         manoeuvres=[manoeuvre],
     )
 
@@ -26,7 +26,7 @@ def test_mission_result_converts_inputs_to_expected_types():
 
 def test_mission_result_copies_input_arrays():
     original_times_s = np.array([0.0, 1.0])
-    original_states = np.zeros((2, 12))
+    original_states = np.zeros((2, 6))
 
     result = MissionResult(
         times_s=original_times_s,
@@ -45,7 +45,7 @@ def test_mission_result_copies_input_arrays():
     "invalid_states",
     [
         np.zeros(12),
-        np.zeros((2, 6)),
+        np.zeros((2, 12)),
         np.zeros((2, 12, 1)),
     ],
 )
@@ -62,7 +62,7 @@ def test_mission_result_rejects_non_one_dimensional_times():
     with pytest.raises(ValueError, match="times_s must be one-dimensional"):
         MissionResult(
             times_s=[[0.0], [1.0]],
-            states=np.zeros((2, 12)),
+            states=np.zeros((2, 6)),
             manoeuvres=[],
         )
 
@@ -71,7 +71,7 @@ def test_mission_result_rejects_mismatched_lengths():
     with pytest.raises(ValueError, match="matching lengths"):
         MissionResult(
             times_s=[0.0, 1.0],
-            states=np.zeros((3, 12)),
+            states=np.zeros((3, 6)),
             manoeuvres=[],
         )
 
@@ -89,7 +89,7 @@ def test_mission_result_rejects_times_that_are_not_increasing(
     with pytest.raises(ValueError, match="strictly increasing"):
         MissionResult(
             times_s=invalid_times_s,
-            states=np.zeros((2, 12)),
+            states=np.zeros((2, 6)),
             manoeuvres=[],
         )
 
@@ -99,14 +99,14 @@ def test_mission_result_rejects_non_finite_times(invalid_time):
     with pytest.raises(ValueError, match="times_s.*finite"):
         MissionResult(
             times_s=[0.0, invalid_time],
-            states=np.zeros((2, 12)),
+            states=np.zeros((2, 6)),
             manoeuvres=[],
         )
 
 
 @pytest.mark.parametrize("invalid_state", [np.nan, np.inf, -np.inf])
 def test_mission_result_rejects_non_finite_states(invalid_state):
-    states = np.zeros((2, 12))
+    states = np.zeros((2, 6))
     states[1, 4] = invalid_state
 
     with pytest.raises(ValueError, match="states.*finite"):

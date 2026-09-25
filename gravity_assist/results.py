@@ -12,7 +12,7 @@ class MissionResult:
     times_s: np.ndarray
     states: np.ndarray
     manoeuvres: tuple[ImpulsiveManoeuvre, ...]
-    state_layout: str = "planet_spacecraft"
+    state_layout: str = "spacecraft"
     reference_frame: str | None = None
     departure_epoch: datetime | None = None
     dense_state: Callable | None = field(default=None, repr=False, compare=False)
