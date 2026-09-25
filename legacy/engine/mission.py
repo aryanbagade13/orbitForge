@@ -2,12 +2,12 @@
 
 from collections.abc import Sequence
 
-from .results import MissionResult
+from gravity_assist.results import MissionResult
 
 import numpy as np
 
 from .integrators import DerivativeFunction, StateVector, propagate_fixed_step
-from .manoeuvres import ImpulsiveManoeuvre
+from gravity_assist.manoeuvres import ImpulsiveManoeuvre
 from .simulation import apply_spacecraft_manoeuvre_to_system_state
 
 

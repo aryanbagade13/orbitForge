@@ -1,8 +1,8 @@
 import numpy as np
-from .collisions import position_intersects_body
-from .manoeuvres import ImpulsiveManoeuvre, apply_impulsive_manoeuvre
-from .models import OrbitalState, CelestialBody
-from .forces import total_gravitational_acceleration
+from gravity_assist.collisions import position_intersects_body
+from gravity_assist.manoeuvres import ImpulsiveManoeuvre, apply_impulsive_manoeuvre
+from gravity_assist.models import OrbitalState, CelestialBody
+from gravity_assist.forces import total_gravitational_acceleration
 
 def pack_system_state(
     planet_state: OrbitalState,

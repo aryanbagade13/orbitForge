@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from experiments.jupiter_flyby_scenario import (
+from legacy.experiments.jupiter_flyby_scenario import (
     SECONDS_PER_DAY,
     calculate_flyby_comparison_metrics,
     propagate_jupiter_flyby,

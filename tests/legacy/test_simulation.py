@@ -3,7 +3,7 @@ import pytest
 
 from gravity_assist.manoeuvres import ImpulsiveManoeuvre
 from gravity_assist.models import CelestialBody, OrbitalState
-from gravity_assist.simulation import (
+from legacy.engine.simulation import (
     apply_spacecraft_manoeuvre_to_system_state,
     pack_system_state,
     restricted_three_body_derivative,

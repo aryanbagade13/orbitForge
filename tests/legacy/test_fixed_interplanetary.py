@@ -4,12 +4,13 @@ import numpy as np
 import pytest
 
 from gravity_assist.constants import G
-from gravity_assist.integrators import propagate_fixed_step
+from legacy.engine.integrators import propagate_fixed_step
 from gravity_assist.interplanetary import (
-    UnsafeTrajectoryError, make_ephemeris_derivative, simulate_mission,
+    UnsafeTrajectoryError, make_ephemeris_derivative,
 )
+from legacy.engine.interplanetary import simulate_mission
 from gravity_assist.manoeuvres import ImpulsiveManoeuvre
-from gravity_assist.mission import propagate_with_manoeuvres
+from legacy.engine.mission import propagate_with_manoeuvres
 from gravity_assist.mission_candidate import MissionCandidate
 from gravity_assist.mission_definition import MissionDefinition
 from gravity_assist.models import CelestialBody, OrbitalState
