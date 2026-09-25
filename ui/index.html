@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>orbitForge · Trajectory viewer</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="toolbar">
+    <div class="app-title"><strong>orbit<span>Forge</span></strong><span>Trajectory viewer</span></div>
+    <span class="source-label">Saved simulation</span>
+  </header>
+  <main>
+    <section class="mission-heading" aria-label="Simulation details">
+      <h1>Interplanetary baseline</h1>
+      <p>Target sequence: Earth → Jupiter → Saturn <span>· Unoptimised candidates</span></p>
+    </section>
+    <div id="error" class="error" role="alert" hidden></div>
+    <div class="workspace">
+      <aside class="controls panel">
+        <h2>Trajectory</h2>
+        <div class="route-options" role="group" aria-label="Active trajectory">
+          <button class="route active" data-route="no_burn" aria-pressed="true">
+            <span class="route-top"><i class="dot mint"></i>No burn<span class="radio" aria-hidden="true"></span></span>
+            <span class="route-detail">Baseline <b>0 m/s</b></span>
+          </button>
+          <button class="route" data-route="correction" aria-pressed="false">
+            <span class="route-top"><i class="dot lavender"></i>Day-180 correction<span class="radio" aria-hidden="true"></span></span>
+            <span class="route-detail">Single burn <b>50 m/s</b></span>
+          </button>
+        </div>
+        <label class="toggle-row">
+            <span>Compare trajectories</span>
+            <input id="compare" type="checkbox" checked>
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+        <section class="control-section">
+          <h2>Display</h2>
+          <label class="toggle-row">
+            <span>Planet paths</span>
+            <input id="paths" type="checkbox" checked>
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+          <label class="toggle-row">
+            <span>Body labels</span>
+            <input id="labels" type="checkbox" checked>
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+          <div class="legend" aria-label="Planet colours">
+            <span><i class="dot earth"></i>Earth</span>
+            <span><i class="dot jupiter"></i>Jupiter</span>
+            <span><i class="dot saturn"></i>Saturn</span>
+          </div>
+        </section>
+        <details class="model-note">
+          <summary>Model and data</summary>
+          <p>Four-body gravity, JPL planetary ephemerides and adaptive DOP853 integration.</p>
+          <p id="model-details">Loading saved report…</p>
+          <p>Sun-relative positions use ICRS axes. Body markers are not to scale. Playback interpolates saved samples.</p>
+        </details>
+      </aside>
+      <section class="viewport panel" aria-label="Interactive trajectory display">
+        <div class="view-top">
+          <span>Sun-relative position <small>(AU)</small></span>
+          <div class="segmented" role="group" aria-label="Camera projection">
+            <button id="perspective" class="selected" aria-pressed="true">3D</button>
+            <button id="top-view" aria-pressed="false">XY</button>
+          </div>
+        </div>
+        <canvas id="orbit" aria-label="Sun-relative orbital trajectories. Drag to rotate and scroll to zoom. Camera buttons provide a keyboard alternative."></canvas>
+        <div class="view-caption">
+          <strong id="view-year">Year 0.00</strong>
+          <span id="view-date">Loading trajectory…</span>
+        </div>
+        <div class="camera-tools" role="group" aria-label="Camera controls">
+          <button id="rotate-left" title="Rotate left" aria-label="Rotate left">↶</button>
+          <button id="rotate-right" title="Rotate right" aria-label="Rotate right">↷</button>
+          <button id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+          <button id="zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+          <button id="reset" title="Reset view" aria-label="Reset view">Reset</button>
+        </div>
+        <div class="view-bottom"><span>Drag to rotate · Scroll to zoom</span><span id="scale">Grid: 5 AU</span></div>
+      </section>
+      <aside class="telemetry panel">
+        <h2>Spacecraft state</h2>
+        <p class="muted">At the selected time</p>
+        <dl class="state-values">
+          <div><dt>Distance from Sun</dt><dd id="distance">— <small>AU</small></dd></div>
+          <div><dt>Speed <small>(barycentric)</small></dt><dd id="speed">— <small>km/s</small></dd></div>
+        </dl>
+        <figure class="distance-chart">
+          <svg id="distance-chart" viewBox="0 0 220 38" aria-label="Distance from Sun over the full flight">
+            <path id="distance-path"/>
+            <line id="chart-cursor" y1="0" y2="38"/>
+          </svg>
+          <figcaption>Distance from Sun over the full flight</figcaption>
+        </figure>
+        <section class="position">
+          <h3>Sun-relative position <small>(AU)</small></h3>
+          <dl class="state-values">
+            <div><dt>X</dt><dd id="pos-x">—</dd></div>
+            <div><dt>Y</dt><dd id="pos-y">—</dd></div>
+            <div><dt>Z</dt><dd id="pos-z">—</dd></div>
+          </dl>
+        </section>
+        <section class="evaluation">
+          <h2>Full-flight result</h2>
+          <dl class="state-values">
+            <div><dt>Status</dt><dd id="feasibility" class="result-status">—</dd></div>
+            <div><dt>Saturn arrival distance</dt><dd id="arrival">— <small>AU</small></dd></div>
+          </dl>
+          <p id="result-note" class="muted">Loading evaluation…</p>
+        </section>
+      </aside>
+      <section class="timeline panel" aria-label="Playback controls">
+        <div class="timeline-heading">
+          <div><h2>Flight time</h2><span id="day">Day 0</span></div>
+          <span id="sample-count">Loading samples</span>
+        </div>
+        <div class="playback">
+          <button id="play" class="play" aria-label="Play trajectory" disabled>▶</button>
+          <div class="scrubber">
+            <input id="time" type="range" min="0" max="1000" value="0" step="any" aria-label="Flight time" disabled>
+            <div class="time-ticks" id="time-ticks"></div>
+          </div>
+          <label class="rate">
+            <span class="sr-only">Playback speed</span>
+            <select id="rate">
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+          </label>
+        </div>
+        <div class="timeline-foot">
+          <button id="departure">Departure</button>
+          <button id="burn">Day 180 · correction</button>
+          <button id="end">Arrival</button>
+        </div>
+      </section>
+    </div>
+    <footer><span id="data-note">Reading saved baseline</span></footer>
+  </main>
+</body>
+</html>

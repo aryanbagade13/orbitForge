@@ -1,0 +1,4 @@
+#!/bin/zsh
+UI_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+PROJECT_DIR="$(dirname "$UI_DIR")"
+exec "$PROJECT_DIR/.venv/bin/python" "$UI_DIR/desktop.py"
