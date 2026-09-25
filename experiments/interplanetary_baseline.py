@@ -139,8 +139,18 @@ def run_experiment(output_dir, show=True):
     fig2.suptitle("Distance to the moving planets — these candidates miss the mission targets")
     fig2.tight_layout()
     fig2.savefig(output_dir/"encounter_distances.png",dpi=160)
-    np.savez_compressed(output_dir/"trajectory_samples.npz", times_s=times,
-                        no_burn=samples["No burn"], correction=samples["Day-180 correction"])
+    # All rows use the same timestamps and barycentric ICRS coordinates.
+    # Save the Sun too so a viewer can display Sun-relative trajectories.
+    np.savez_compressed(
+        output_dir/"trajectory_samples.npz",
+        times_s=times,
+        no_burn=samples["No burn"],
+        correction=samples["Day-180 correction"],
+        sun_positions_km=planet_positions["Sun"],
+        earth_positions_km=planet_positions["Earth"],
+        jupiter_positions_km=planet_positions["Jupiter"],
+        saturn_positions_km=planet_positions["Saturn"],
+    )
     report = dict(
         departure_epoch=raw.departure_epoch.isoformat(), frame=raw.frame,
         flight_years=8., departure_offset_km=(1e6*direction).tolist(),
