@@ -46,8 +46,10 @@ enumerate alternative sequences among several encounters within one window.
 
 Arrival distance is measured against the destination at the candidate's exact
 arrival time, not against its launch-time location or its nearest point at any
-time. Arrival relative velocity is reported as a vector. The current goal is
-a flyby; capture/insertion and a terminal velocity constraint are not modelled.
+time. Arrival relative velocity is reported as a vector. The baseline evaluator checks
+encounter distances; capture/insertion and a terminal velocity constraint are
+not modelled in the propagated mission. Separate arrival-cost helpers are in
+development, as described below.
 
 Every numeric constraint residual is satisfied at <= 0. Positive values are
 violations. Units are recorded in keys (`_km` or `_s`); do not sum these raw
@@ -82,7 +84,10 @@ need additional constraints before close-flyby results can be called safe.
 
 ## Numerical choices
 
-The original fixed-step RK4 remains available. The new mission path uses
+The original fixed-step RK4 is archived in `legacy/engine/integrators.py`.
+Its mission wrappers and Jupiter experiments are under `legacy/` too; see
+`legacy/README.md` for their module run commands. The current package does
+not import the archived engine. The current mission path uses
 SciPy DOP853 with adaptive error control and dense output. This is an ODE
 integrator, not a route optimiser:
 https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html
@@ -90,6 +95,10 @@ https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.h
 Each burn starts a new integration segment. Dense queries at burn times return
 the post-burn state; velocity is never interpolated across the impulse.
 The endpoint is the candidate's arrival time, including any final burn.
+
+`MissionResult` defaults to the six-component `spacecraft` layout. The
+explicit `planet_spacecraft` layout remains supported for archived wrappers,
+which set it when producing the original twelve-component results.
 
 Ephemeris Hermite interpolation uses both JPL positions and velocities.
 It rejects extrapolation and checks every table interval's midpoint against
@@ -118,6 +127,32 @@ ignored by Git. From the project root, the equivalent command is:
 Add `--no-show` for a non-interactive run or `--output-dir PATH` to choose
 the artifact folder. Dependencies are listed in `requirements.txt`. The first
 JPL provider construction downloads the kernel to Astropy's cache.
+
+### Saved trajectory data
+
+`trajectory_samples.npz` contains `times_s` with shape `(1200,)`, the
+`no_burn` and `correction` spacecraft states with shape `(1200, 6)`, and
+`sun_positions_km`, `earth_positions_km`, `jupiter_positions_km`, and
+`saturn_positions_km`, each with shape `(1200, 3)`. Every row refers to the
+same timestamp, using barycentric ICRS coordinates. The adjacent `summary.json`
+records the departure epoch and frame. The desktop viewer loads these arrays
+without querying the planetary ephemeris. For Sun-relative display, subtract the
+saved Sun position from each body's or spacecraft's position at the same time.
+
+### Desktop playback
+
+After generating the baseline, install `ui/requirements.txt` in the project
+virtual environment and run `.venv/bin/python ui/desktop.py`. The macOS
+`ui/orbitForge.app` launcher runs the same entry point. See the
+[viewer guide](../ui/README.md) for setup and controls.
+
+The viewer displays Sun-relative positions in AU using ICRS axes. Its XY
+projection is not an ecliptic-plane view. Planet markers are enlarged and
+planet paths cover only the saved interval. Playback linearly interpolates
+saved position samples; it does not rerun the integrator. Speed is interpolated
+from saved barycentric velocity magnitudes. In particular, the viewer does not
+resolve an impulsive velocity change exactly between neighbouring samples.
+The saved full-flight evaluation is independent of the selected playback time.
 
 ### Explicitly illustrative conditions
 
@@ -165,3 +200,31 @@ search, and scaled constraints. Departure time/state remain fixed within a
 `MissionDefinition`; searching launch windows would create different mission
 definitions and ephemeris tables. There is no guarantee that a small set of
 correction burns can rescue the illustrative initial conditions above.
+
+
+## Transfer and arrival helpers in development
+
+`gravity_assist/transfer.py` contains small calculations used to prepare a
+future targeted transfer:
+
+- `heliocentric_state` subtracts the Sun's position and velocity from a body's
+  state at the same time.
+- `transfer_endpoints` obtains the departure body's state at time zero and the
+  destination's state at the requested flight duration.
+- `relative_speed` returns the magnitude of the difference between two velocity
+  vectors expressed in the same frame.
+- `hohmann_transfer_time` gives a half-ellipse flight-time reference for circular,
+  coplanar orbits. It does not solve transfers between actual planetary states.
+
+`gravity_assist/arrival.py` estimates periapsis speeds and a capture burn using
+an isolated two-body approximation. `arrival_delta_v` selects `flyby` (zero
+arrival burn) or `orbit_insertion` (the estimated braking cost). Distances are
+from the body's centre, not altitudes above its surface. Capture assumes an
+instantaneous burn at periapsis with aligned incoming and target velocities.
+
+These helpers are not yet wired into the baseline evaluator or desktop UI.
+A zero flyby burn is not a feasibility check, and an estimated capture cost is
+not a propagated bound orbit. A Lambert solver and launch-window search remain
+to be implemented. The provisional future-mission search range is departures
+in 2030–2035 with flight durations of 5–10 years; these are proposed bounds,
+not validated launch opportunities or a selected mission.

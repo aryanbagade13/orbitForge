@@ -4,22 +4,28 @@ A local desktop viewer for `experiments/interplanetary_baseline.py` outputs.
 The macOS window uses pywebview and the system WebKit renderer. It reads the
 saved simulation directly, without a browser tab, web server or internet access.
 
-On this Mac, double-click `ui/orbitForge.app` in Finder to launch. This is a
+On macOS, double-click `ui/orbitForge.app` in Finder to launch. This is a
 local app launcher: keep it in the `ui` folder. It uses the repository's `.venv`
 and saved outputs; it is not a self-contained app for distribution to other Macs.
 
-From the orbitForge repository, using its virtual environment:
+From the repository root, after creating or selecting the project virtual
+environment, install the simulation and UI dependencies and generate results:
 
 ```sh
+.venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python -m pip install -r ui/requirements.txt
+.venv/bin/python -m experiments.interplanetary_baseline --no-show
 .venv/bin/python ui/desktop.py
 ```
 
-Close the window to quit. If running this folder outside the repository,
-supply the saved output folder:
+The first simulation run needs internet access to download the JPL kernel.
+Opening the viewer after generating results works offline. Generated outputs
+are not committed to Git.
+
+Close the window to quit. To open another baseline output folder:
 
 ```sh
-/path/to/Orbital_Dynamics/.venv/bin/python desktop.py --data-dir /path/to/Orbital_Dynamics/outputs/interplanetary_baseline
+.venv/bin/python ui/desktop.py --data-dir /path/to/baseline-output
 ```
 
 Missing outputs? Run the baseline experiment first. Restart the viewer after
@@ -34,7 +40,7 @@ for development; it is not used by the desktop app.
 - Scrub or play the mission; event buttons jump to departure, the correction or arrival.
 - Read the selected-time position and speed alongside the saved full-flight evaluation.
 
-## Small, separate layers
+## Source files
 
 `server.py` contains the NPZ validation and optional development server.
 It subtracts the saved Sun position from each position and converts km to AU.
@@ -52,3 +58,22 @@ scale. The grid is in the ICRS XY plane, not the ecliptic.
 
 The baseline trials miss their mission targets. The result panel reads their
 saved evaluations; the viewer neither optimises nor changes a mission.
+
+
+## Editing and checks
+
+Edit `index.html` for labels and structure, `style.css` for appearance and
+`app.js` for viewer interactions. The desktop launcher embeds these files when
+it opens, so close and reopen the app to see changes. No frontend build step
+is required.
+
+The data folder must contain both `trajectory_samples.npz` and `summary.json`
+from the baseline experiment. The loader validates finite, aligned arrays and
+increasing sample times before displaying results. If loading fails, check the
+terminal error and regenerate the baseline outputs.
+
+From the repository root, run the viewer data checks with:
+
+```sh
+.venv/bin/python -m unittest discover -s ui -p 'test_*.py' -v
+```
